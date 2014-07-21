@@ -50,8 +50,8 @@ RUN { \
 		echo 'daemon off;'; \
 	} >> /usr/local/etc/nginx.conf
 
-# Remove nginx source files after make install
-RUN rm -R /usr/src/*
+# Build cleanup
+RUN rm -R /usr/src/* && apt-get clean
 
 WORKDIR /usr/local/nginx/html
 
