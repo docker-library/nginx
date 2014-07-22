@@ -18,7 +18,7 @@ RUN ./configure \
 		--user=www-data \
 		--group=www-data \
 		--prefix=/usr/local/nginx \
-		--conf-path=/etc/nginx.conf \
+		--conf-path=/usr/local/nginx/conf/nginx.conf \
 		--http-log-path=/proc/self/fd/1 \
 		--error-log-path=/proc/self/fd/2 \
 		--with-http_addition_module \
@@ -48,7 +48,10 @@ RUN { \
 		echo; \
 		echo '# stay in the foreground so Docker has a process to track'; \
 		echo 'daemon off;'; \
-	} >> /etc/nginx.conf
+	} >> /usr/local/etc/nginx.conf
+
+# Build cleanup
+RUN rm -R /usr/src/* && apt-get clean
 
 WORKDIR /usr/local/nginx/html
 
