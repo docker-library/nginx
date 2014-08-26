@@ -111,8 +111,8 @@ RUN buildDeps=" \
 	&& ./configure \
 		--user=www-data \
 		--group=www-data \
-		--prefix=/usr/local/nginx \
-		--conf-path=/etc/nginx.conf \
+		--prefix=/usr/share/nginx \
+		--conf-path=/etc/nginx/nginx.conf \
 		--http-log-path=/proc/self/fd/1 \
 		--error-log-path=/proc/self/fd/2 \
 		--with-http_addition_module \
@@ -136,16 +136,51 @@ RUN buildDeps=" \
 	&& make install \
 	&& cd / \
 	&& rm -r /usr/src/nginx \
-	&& chown -R www-data:www-data /usr/local/nginx \
+	&& chown -R www-data:www-data /usr/share/nginx \
 	&& { \
+		echo; \
+		echo 'worker_processes  1;'; \
+		echo; \
+		echo 'events {'; \
+		echo '  worker_connections  1024;'; \
+		echo '}'; \
+		echo; \
+		echo 'http {'; \
+		echo '  include             mime.types;'; \
+		echo '  default_type        application/octet-stream;'; \
+		echo '  sendfile            on;'; \
+		echo '  keepalive_timeout   65;'; \
+		echo '  include             /etc/nginx/sites-enabled/*;'; \
+		echo '}'; \
 		echo; \
 		echo '# stay in the foreground so Docker has a process to track'; \
 		echo 'daemon off;'; \
-	} >> /etc/nginx.conf \
+	} > /etc/nginx/nginx.conf \
+	&& mkdir -p /etc/nginx/sites-enabled \
+	&& { \
+		echo; \
+		echo 'server {'; \
+		echo '  listen       80;'; \
+		echo '  server_name  localhost;'; \
+		echo; \
+		echo '  location / {'; \
+		echo '    root   html;'; \
+		echo '    index  index.html index.htm;'; \
+		echo '  }'; \
+		echo; \
+		echo '  error_page   500 502 503 504  /50x.html;'; \
+		echo '  location = /50x.html {'; \
+		echo '    root   html;'; \
+		echo '  }'; \
+		echo; \
+		echo '}'; \
+	} > /etc/nginx/sites-enabled/default.conf \ 
 	&& apt-get purge -y --auto-remove $buildDeps
 
-ENV PATH /usr/local/nginx/sbin:$PATH
-WORKDIR /usr/local/nginx/html
+VOLUME ["/etc/nginx/sites-enabled"]
+
+ENV PATH /usr/share/nginx/sbin:$PATH
+WORKDIR /usr/share/nginx/html
 
 # TODO USER www-data
 
